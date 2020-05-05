@@ -20,10 +20,38 @@ namespace PickleAndHope.DataAccess
 
         const string ConnectionString = "Server=localhost;Database=PickleAndHope;Trusted_Connection=True;";
 
-        public void Add(Pickle pickle)
+        public Pickle Add(Pickle pickle)
         {
-            pickle.Id = _pickles.Max(x => x.Id) + 1;
-            _pickles.Add(pickle);
+            //pickle.Id = _pickles.Max(x => x.Id) + 1;
+            //_pickles.Add(pickle);
+
+            var sql = @"insert into Pickle(NumberInStock, Price, Size, Type)
+                        output inserted.*
+                        values(@NumberInStock,@Price,@Size, @Type)";
+
+            using (var connection = new SqlConnection(ConnectionString))
+            {
+                connection.Open();
+
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = sql;
+
+                cmd.Parameters.AddWithValue("NumberInStock", pickle.NumberInStock);
+                cmd.Parameters.AddWithValue("Price", pickle.Price);
+                cmd.Parameters.AddWithValue("Size", pickle.Size);
+                cmd.Parameters.AddWithValue("Type", pickle.Type);
+
+                var reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    var newPickle = MapReaderToPickle(reader);
+                    return newPickle;
+                }
+
+                return null;
+            }
+
         }
 
         public void Remove(string type)
@@ -33,11 +61,38 @@ namespace PickleAndHope.DataAccess
 
         public Pickle Update(Pickle pickle)
         {
-            var pickleToUpdate = GetByType(pickle.Type);
+            //var pickleToUpdate = GetByType(pickle.Type);
 
-            pickleToUpdate.NumberInStock += pickle.NumberInStock;
+            //pickleToUpdate.NumberInStock += pickle.NumberInStock;
 
-            return pickleToUpdate;
+            //return pickleToUpdate;
+
+            var sql = @"update Pickle
+                        set NumberInStock = NumberInStock + @NewStock
+                        where Id = @id";
+
+            using (var connection = new SqlConnection(ConnectionString))
+            {
+                connection.Open();
+
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = sql;
+
+                cmd.Parameters.AddWithValue("NewStock", pickle.NumberInStock);
+                cmd.Parameters.AddWithValue("Id", pickle.Id);
+
+                var reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    var updatedPickle = MapReaderToPickle(reader);
+                    return updatedPickle;
+                }
+
+                return null;
+
+            }
+
         }
 
         public Pickle GetByType(string type)
