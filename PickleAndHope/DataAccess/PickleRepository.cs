@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PickleAndHope.Models;
 using Dapper;
+using Microsoft.Extensions.Configuration;
 
 namespace PickleAndHope.DataAccess
 {
@@ -19,7 +20,12 @@ namespace PickleAndHope.DataAccess
             } 
         };
 
-        const string ConnectionString = "Server=localhost;Database=PickleAndHope;Trusted_Connection=True;";
+        string ConnectionString;
+
+        public PickleRepository(IConfiguration config)
+        {
+            ConnectionString = config.GetConnectionString("PickleAndHope");
+        }
 
         public Pickle Add(Pickle pickle)
         {
